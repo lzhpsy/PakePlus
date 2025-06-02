@@ -1,22 +1,2499 @@
 <!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <link rel="stylesheet" href="styles.css" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>PakePlus App</title>
-        <script type="module" src="/main.js" defer></script>
-    </head>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计划表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    <body>
-        <main class="container">
-            <h1>Welcome to PakePlus</h1>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
 
-            <form class="row" id="greet-form">
-                <input id="greet-input" placeholder="Enter a name..." />
-                <button type="submit">Greet</button>
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: rgba(0, 122, 255, 0.1);
+            backdrop-filter: blur(20px);
+            color: #007AFF;
+            padding: 30px;
+            text-align: center;
+            border-bottom: 1px solid rgba(0, 122, 255, 0.1);
+        }
+
+        .plan-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 0 30px;
+            overflow-x: auto;
+        }
+
+        .plan-tab {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 122, 255, 0.2);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+            font-weight: 500;
+            font-size: 14px;
+            color: #007AFF;
+            position: relative;
+        }
+
+        .plan-tab:hover {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .plan-tab.active {
+            background: #007AFF;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+        }
+
+        .plan-tab .close-btn {
+            margin-left: 8px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+        }
+
+        .add-plan-btn {
+            padding: 10px 16px;
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            color: #34C759;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .add-plan-btn:hover {
+            background: #34C759;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1D1D1F;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.7;
+            color: #86868B;
+            font-weight: 400;
+        }
+
+        .progress-section {
+            background: rgba(248, 248, 248, 0.6);
+            backdrop-filter: blur(20px);
+            padding: 25px 30px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .progress-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .progress-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+
+        .progress-card.week1 { 
+            background: rgba(0, 122, 255, 0.1); 
+            border-left: 3px solid #007AFF;
+        }
+        .progress-card.week2 { 
+            background: rgba(52, 199, 89, 0.1); 
+            border-left: 3px solid #34C759;
+        }
+        .progress-card.week3 { 
+            background: rgba(255, 149, 0, 0.1); 
+            border-left: 3px solid #FF9500;
+        }
+        .progress-card.week4 { 
+            background: rgba(255, 59, 48, 0.1); 
+            border-left: 3px solid #FF3B30;
+        }
+
+        .progress-card h3 {
+            color: #1D1D1F;
+            margin-bottom: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0,0,0,0.08);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #007AFF;
+            border-radius: 3px;
+            transition: width 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            align-items: center;
+        }
+
+        .controls-left {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .controls-right {
+            margin-left: auto;
+            display: flex;
+            gap: 12px;
+        }
+
+        .add-task-btn {
+            padding: 10px 18px;
+            background: rgba(52, 199, 89, 0.1);
+            border: 1px solid rgba(52, 199, 89, 0.3);
+            border-radius: 20px;
+            cursor: pointer;
+            color: #34C759;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+
+        .add-task-btn:hover {
+            background: #34C759;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .modal h3 {
+            color: #1D1D1F;
+            margin-bottom: 20px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #1D1D1F;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input[list] {
+            background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="4" height="5"><path fill="%23666" d="M2 0L0 2h4zm0 5L0 3h4z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 12px;
+            padding-right: 32px;
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            height: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0056CC;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(0, 0, 0, 0.05);
+            color: #1D1D1F;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-btn {
+            padding: 10px 18px;
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            font-weight: 500;
+            font-size: 14px;
+            color: #007AFF;
+        }
+
+        .filter-btn:hover {
+            background: rgba(0, 122, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .filter-btn.active {
+            background: #007AFF;
+            border-color: #007AFF;
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 18px;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 20px;
+            font-size: 14px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #007AFF;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .phase-section {
+            margin-bottom: 24px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+        }
+
+        .phase-header {
+            padding: 20px 25px;
+            color: #1D1D1F;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .phase-header:hover {
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .phase-datacollection { 
+            background: rgba(0, 122, 255, 0.08);
+        }
+        .phase-dataprocessing { 
+            background: rgba(52, 199, 89, 0.08);
+        }
+        .phase-calculation { 
+            background: rgba(255, 149, 0, 0.08);
+        }
+        .phase-others { 
+            background: rgba(255, 59, 48, 0.08);
+        }
+
+        .toggle-icon {
+            transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            color: #007AFF;
+            font-size: 14px;
+        }
+
+        .phase-content {
+            background: rgba(255, 255, 255, 0.5);
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .phase-content.collapsed {
+            max-height: 0;
+        }
+
+        .task-grid {
+            display: grid;
+            gap: 1px;
+            background: rgba(0,0,0,0.05);
+        }
+
+        .task-row {
+            display: grid;
+            grid-template-columns: 50px 2fr 2fr 3fr;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            border-radius: 0;
+        }
+
+        .task-row:hover {
+            background: rgba(0, 122, 255, 0.03);
+        }
+
+        .task-row.completed {
+            background: rgba(52, 199, 89, 0.08);
+        }
+
+        .task-cell {
+            padding: 16px;
+            border-right: 1px solid rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+        }
+
+        .task-cell:last-child {
+            border-right: none;
+        }
+
+        .checkbox {
+            width: 22px;
+            height: 22px;
+            border: 2px solid #D1D1D6;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .checkbox:hover {
+            border-color: #007AFF;
+            transform: scale(1.05);
+        }
+
+        .checkbox.checked {
+            background: #007AFF;
+            border-color: #007AFF;
+            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .task-title {
+            font-weight: 600;
+            color: #1D1D1F;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .task-desc {
+            font-size: 13px;
+            color: #86868B;
+            font-weight: 400;
+        }
+
+        .data-source {
+            font-size: 13px;
+            color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 12px;
+            display: inline-block;
+            font-weight: 500;
+            border: 1px solid rgba(0, 122, 255, 0.2);
+        }
+
+        .btn-remove {
+            margin-left: 10px;
+            color: #FF3B30;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .btn-remove:hover {
+            background: rgba(255, 59, 48, 0.1);
+        }
+
+        .stats {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            min-width: 200px;
+        }
+
+        .stats h4 {
+            color: #1D1D1F;
+            margin-bottom: 16px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #86868B;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #007AFF;
+        }
+
+        @media (max-width: 768px) {
+            .task-row {
+                grid-template-columns: 40px 1fr;
+                gap: 10px;
+            }
+            
+            .task-cell:nth-child(3),
+            .task-cell:nth-child(4) {
+                grid-column: 1 / -1;
+                border-top: 1px solid #e2e8f0;
+                margin-top: 10px;
+                padding-top: 10px;
+            }
+
+            .stats {
+                position: static;
+                margin-top: 30px;
+            }
+
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .phase-btn {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .phase-btn .delete-phase {
+            margin-left: 6px;
+            background: rgba(255, 59, 48, 0.1);
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+            color: #FF3B30;
+        }
+
+        .phase-btn:hover .delete-phase {
+            display: flex;
+        }
+
+        .schedule-container {
+            display: grid;
+            grid-template-columns: 80px repeat(7, 1fr);
+            gap: 1px;
+            background: rgba(0,0,0,0.05);
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .schedule-header {
+            background: rgba(0, 122, 255, 0.1);
+            padding: 12px 8px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            color: #007AFF;
+        }
+
+        .schedule-time-slot {
+            background: rgba(248, 248, 248, 0.9);
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            color: #86868B;
+            border-right: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .schedule-cell {
+            background: rgba(255, 255, 255, 0.9);
+            min-height: 60px;
+            padding: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .schedule-cell:hover {
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .schedule-cell.has-task {
+            background: rgba(52, 199, 89, 0.1);
+        }
+
+        .schedule-task {
+            background: #007AFF;
+            color: white;
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-bottom: 2px;
+            cursor: pointer;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .schedule-task.priority-high {
+            background: #FF3B30;
+        }
+
+        .schedule-task.priority-medium {
+            background: #FF9500;
+        }
+
+        .schedule-task.priority-low {
+            background: #34C759;
+        }
+
+        .schedule-task:hover::after {
+            content: '×';
+            position: absolute;
+            top: -2px;
+            right: 2px;
+            background: rgba(255,255,255,0.9);
+            color: #FF3B30;
+            border-radius: 50%;
+            width: 14px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        .week-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .week-nav-btn {
+            background: none;
+            border: 1px solid rgba(0, 122, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: #007AFF;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .week-nav-btn:hover {
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .current-week {
+            font-weight: 600;
+            color: #1D1D1F;
+        }
+
+        .time-picker-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .schedule-container {
+                grid-template-columns: 60px repeat(7, 1fr);
+                font-size: 12px;
+            }
+            
+            .schedule-header {
+                padding: 8px 4px;
+                font-size: 12px;
+            }
+            
+            .schedule-time-slot {
+                padding: 6px 4px;
+                font-size: 11px;
+            }
+            
+            .schedule-cell {
+                min-height: 50px;
+                padding: 2px;
+            }
+            
+            .schedule-task {
+                font-size: 10px;
+                padding: 2px 4px;
+            }
+            
+            .time-picker-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .week-navigation {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 研究计划</h1>
+            <p></p>
+        </div>
+
+        <div class="plan-tabs">
+            <div class="plan-tab active" data-plan="default" onclick="switchPlan('default')">
+                默认计划
+                <span class="close-btn" onclick="event.stopPropagation(); closePlan('default')" style="display: none;">×</span>
+            </div>
+            <div class="add-plan-btn" onclick="addNewPlan()">+ 新建计划</div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-grid">
+                <div class="progress-card week1">
+                    <h3>第一周 - 数据收集</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="week1-progress"></div>
+                    </div>
+                    <div><span id="week1-completed">0</span> / <span id="week1-total">13</span> 项任务</div>
+                </div>
+                <div class="progress-card week2">
+                    <h3>第二-三周 - 数据处理</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="week2-progress"></div>
+                    </div>
+                    <div><span id="week2-completed">0</span> / <span id="week2-total">18</span> 项任务</div>
+                </div>
+                <div class="progress-card week3">
+                    <h3>第四周 - 指标计算</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="week3-progress"></div>
+                    </div>
+                    <div><span id="week3-completed">0</span> / <span id="week3-total">5</span> 项任务</div>
+                </div>
+                <div class="progress-card week4">
+                    <h3>其他任务</h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="week4-progress"></div>
+                    </div>
+                    <div><span id="week4-completed">0</span> / <span id="week4-total">4</span> 项任务</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <div class="controls-left">
+                    <button class="filter-btn static active" onclick="filterTasks('all')">全部任务</button>
+                    <button class="filter-btn static" onclick="filterTasks('completed')">已完成</button>
+                    <button class="filter-btn static" onclick="filterTasks('pending')">待完成</button>
+                    <!-- 动态阶段按钮将在这里插入 -->
+                    <input type="text" class="search-box" placeholder="搜索任务..." oninput="searchTasks(this.value)">
+                </div>
+                <div class="controls-right">
+                    <button class="add-task-btn" onclick="showAddTaskModal()">+ 添加任务</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- 日程表区域 -->
+            <div class="schedule-section" style="margin-bottom: 30px;">
+                <div class="schedule-header-section" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="color: #1D1D1F; font-size: 1.3rem; font-weight: 600;">📅 本周时间安排</h2>
+                    <div class="week-navigation">
+                        <button class="week-nav-btn" onclick="changeWeek(-1)">← 上一周</button>
+                        <div class="current-week" id="currentWeekDisplay">2025年6月2日 - 6月8日</div>
+                        <button class="week-nav-btn" onclick="changeWeek(1)">下一周 →</button>
+                    </div>
+                    <button class="add-task-btn" onclick="showAddScheduleModal()">+ 添加时间安排</button>
+                </div>
+                
+                <div class="schedule-container" id="scheduleContainer">
+                    <!-- 课程表将在这里动态生成 -->
+                </div>
+                
+                <div style="margin-top: 15px; padding: 10px; background: rgba(0, 122, 255, 0.05); border-radius: 8px; font-size: 14px; color: #86868B;">
+                    💡 <strong>使用提示：</strong>点击任意时间格子添加安排 | 悬停任务可删除 | 不同颜色表示不同优先级
+                </div>
+            </div>
+
+            <!-- 任务管理区域 -->
+            <!-- 数据收集阶段 -->
+            <div class="phase-section" data-phase="datacollection">
+                <div class="phase-header phase-datacollection" onclick="togglePhase(this)">
+                    <span>📊 数据收集 (第一周)</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="phase-content">
+                    <div class="task-grid">
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">NDVI数据</div>
+                                    <div class="task-desc">获取植被指数数据用于植被覆盖度计算</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">遥感影像数据</div>
+                            <div class="task-cell"><span class="data-source">Landsat 8/9, Sentinel-2</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">夜间灯光数据</div>
+                                    <div class="task-desc">人类活动强度评价的核心数据</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">遥感影像数据</div>
+                            <div class="task-cell"><span class="data-source">NPP-VIIRS</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">土地利用/覆盖数据</div>
+                                    <div class="task-desc">土地利用现状分析基础数据</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">空间矢量数据</div>
+                            <div class="task-cell"><span class="data-source">中科院土地利用数据</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">水体空间数据</div>
+                                    <div class="task-desc">水体密度计算的空间基础</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">空间矢量数据</div>
+                            <div class="task-cell"><span class="data-source">OSM, 国家基础地理信息</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">交通网络数据</div>
+                                    <div class="task-desc">交通可达性分析数据</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">空间矢量数据</div>
+                            <div class="task-cell"><span class="data-source">OSM, 相关卫星影像路网注记</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">DEM数据</div>
+                                    <div class="task-desc">地形分析和水文建模</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">数字高程模型</div>
+                            <div class="task-cell"><span class="data-source">GDEM</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">人口社会数据</div>
+                                    <div class="task-desc">服务功能评价的社会经济基础</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">统计数据</div>
+                            <div class="task-cell"><span class="data-source">POP人口数据，村镇人口数据</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">行政区划数据</div>
+                                    <div class="task-desc">空间统计分析单元</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">空间边界数据</div>
+                            <div class="task-cell"><span class="data-source">县级自治区县级，提取四个关键县区数据</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">景观与文化数据</div>
+                                    <div class="task-desc">文化服务功能评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">POI数据</div>
+                            <div class="task-cell"><span class="data-source">文物局，文化旅游部门开放数据</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">旅游景点数据</div>
+                                    <div class="task-desc">休闲娱乐功能评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">POI数据</div>
+                            <div class="task-cell"><span class="data-source">旅游部门，开放地理数据，POI</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">生态保护工程</div>
+                                    <div class="task-desc">生态保护与管理分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">政策文件</div>
+                            <div class="task-cell"><span class="data-source">政府公开信息</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">村庄聚落数据</div>
+                                    <div class="task-desc">聚落分布与空间分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">POI数据</div>
+                            <div class="task-cell"><span class="data-source">开放地理数据，POI，高德等</span></div>
+                        </div>
+                        <div class="task-row" data-week="1">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">科研相关建筑、村庄等</div>
+                                    <div class="task-desc">科学研究功能评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">POI数据</div>
+                            <div class="task-cell"><span class="data-source">POI，公开数据</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数据处理阶段 -->
+            <div class="phase-section" data-phase="dataprocessing">
+                <div class="phase-header phase-dataprocessing" onclick="togglePhase(this)">
+                    <span>⚙️ 数据处理 (第二-三周)</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="phase-content">
+                    <div class="task-grid">
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">数据预处理</div>
+                                    <div class="task-desc">统一坐标系，空间配准，质量控制</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">空间数据标准化</div>
+                            <div class="task-cell"><span class="data-source">统一坐标系(WGS1984)，空间分辨率重采样</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">植被覆盖度计算</div>
+                                    <div class="task-desc">基于NDVI计算植被覆盖度分级</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">遥感数据分析</div>
+                            <div class="task-cell"><span class="data-source">基于NDVI数据计算植被覆盖度</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">人类活动强度计算</div>
+                                    <div class="task-desc">基于夜间灯光数据的活动强度指数</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">遥感数据分析</div>
+                            <div class="task-cell"><span class="data-source">基于夜间灯光数据标准化处理</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">水体密度计算</div>
+                                    <div class="task-desc">计算单位面积水体长度密度</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">空间分析</div>
+                            <div class="task-cell"><span class="data-source">计算单位面积水体长度(km/km²)</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">可达性分析</div>
+                                    <div class="task-desc">交通可达性和服务可达性分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">网络分析</div>
+                            <div class="task-cell"><span class="data-source">计算到距离路网距离和易达性</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">土地利用现状分析</div>
+                                    <div class="task-desc">各类土地利用类型统计分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">分类统计</div>
+                            <div class="task-cell"><span class="data-source">各类景观类型识别和分类</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">景观可视度分析</div>
+                                    <div class="task-desc">基于DEM的视域分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">空间分析</div>
+                            <div class="task-cell"><span class="data-source">根据地形数据生成景观可视度</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">农产品供给量</div>
+                                    <div class="task-desc">基于遥感的农业生产力评估</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">产量估算</div>
+                            <div class="task-cell"><span class="data-source">使用NDVI气象数据计算</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">水体适宜度</div>
+                                    <div class="task-desc">水体生态适宜性评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">适宜性评价</div>
+                            <div class="task-cell"><span class="data-source">根据水体进行适宜度分析</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">地形复杂度</div>
+                                    <div class="task-desc">地形起伏度和复杂性计算</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">地形分析</div>
+                            <div class="task-cell"><span class="data-source">使用DEM进行计算</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">土壤质量评价</div>
+                                    <div class="task-desc">土壤质量指标计算</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">质量评价</div>
+                            <div class="task-cell"><span class="data-source">根据土壤pH等计算质量</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">旅游设施密度</div>
+                                    <div class="task-desc">旅游基础设施空间密度</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">密度计算</div>
+                            <div class="task-cell"><span class="data-source">旅游设施密度数据/面积(个/km²)</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">领域景点资源</div>
+                                    <div class="task-desc">周边景点资源评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">资源评价</div>
+                            <div class="task-cell"><span class="data-source">根据周边景点数量计算</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">聚落可达性</div>
+                                    <div class="task-desc">聚落交通可达性分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">可达性分析</div>
+                            <div class="task-cell"><span class="data-source">根据距离村镇的距离计算</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">生物多样性指数计算</div>
+                                    <div class="task-desc">基于景观多样性的生物多样性</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">多样性分析</div>
+                            <div class="task-cell"><span class="data-source">景观异质性计算生物多样性</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">气象站点、科研站点密度</div>
+                                    <div class="task-desc">科研基础设施密度评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">密度计算</div>
+                            <div class="task-cell"><span class="data-source">科研设施密度</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">径流量分布</div>
+                                    <div class="task-desc">水文径流空间分布分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">水文分析</div>
+                            <div class="task-cell"><span class="data-source">基于降水数据和地形</span></div>
+                        </div>
+                        <div class="task-row" data-week="2">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">径流源范围网格</div>
+                                    <div class="task-desc">水网径流范围网格分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">网络分析</div>
+                            <div class="task-cell"><span class="data-source">水网连通性分析</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 指标计算阶段 -->
+            <div class="phase-section" data-phase="calculation">
+                <div class="phase-header phase-calculation" onclick="togglePhase(this)">
+                    <span>📈 指标计算 (第四周)</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="phase-content">
+                    <div class="task-grid">
+                        <div class="task-row" data-week="3">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">服务功能适宜性评价（调节服务）</div>
+                                    <div class="task-desc">生态调节服务功能综合评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">综合评价</div>
+                            <div class="task-cell"><span class="data-source">水源涵养、水土保持、固碳、洪缓、滞水供给</span></div>
+                        </div>
+                        <div class="task-row" data-week="3">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">服务功能适宜性评价（供给服务）</div>
+                                    <div class="task-desc">物质供给服务功能评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">供给评价</div>
+                            <div class="task-cell"><span class="data-source">淡水供给、农产品供给</span></div>
+                        </div>
+                        <div class="task-row" data-week="3">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">文化服务</div>
+                                    <div class="task-desc">文化、教育、娱乐服务评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">文化评价</div>
+                            <div class="task-cell"><span class="data-source">景观美学、休闲游憩、科学研究</span></div>
+                        </div>
+                        <div class="task-row" data-week="3">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">调节服务资源利用现状</div>
+                                    <div class="task-desc">调节服务功能利用状况评估</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">利用评价</div>
+                            <div class="task-cell"><span class="data-source">生态调节服务现状分析</span></div>
+                        </div>
+                        <div class="task-row" data-week="3">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">供给服务资源利用现状</div>
+                                    <div class="task-desc">供给服务功能利用状况评估</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">利用评价</div>
+                            <div class="task-cell"><span class="data-source">物质供给服务现状分析</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 其他任务 -->
+            <div class="phase-section" data-phase="others">
+                <div class="phase-header phase-others" onclick="togglePhase(this)">
+                    <span>🔧 其他任务</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="phase-content">
+                    <div class="task-grid">
+                        <div class="task-row" data-week="4">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">森林类型（公益林、商品林）</div>
+                                    <div class="task-desc">森林分类管理数据收集</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">林业数据</div>
+                            <div class="task-cell"><span class="data-source">林业部门分类数据</span></div>
+                        </div>
+                        <div class="task-row" data-week="4">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">土地权属性质</div>
+                                    <div class="task-desc">土地所有权和使用权分析</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">权属数据</div>
+                            <div class="task-cell"><span class="data-source">需要去测绘院获取</span></div>
+                        </div>
+                        <div class="task-row" data-week="4">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">管控强度</div>
+                                    <div class="task-desc">生态保护管控强度评价</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">管控评价</div>
+                            <div class="task-cell"><span class="data-source">保护区管理政策分析</span></div>
+                        </div>
+                        <div class="task-row" data-week="4">
+                            <div class="task-cell"><div class="checkbox" onclick="toggleTask(this)"></div></div>
+                            <div class="task-cell">
+                                <div>
+                                    <div class="task-title">永久基本农田覆盖率</div>
+                                    <div class="task-desc">永久基本农田保护区域覆盖率计算</div>
+                                </div>
+                            </div>
+                            <div class="task-cell">覆盖率分析</div>
+                            <div class="task-cell"><span class="data-source">国土资源部门农田保护数据</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加任务模态框 -->
+    <div class="modal" id="addTaskModal">
+        <div class="modal-content">
+            <h3>添加新任务</h3>
+            <form id="addTaskForm">
+                <div class="form-group">
+                    <label for="taskTitle">任务名称</label>
+                    <input type="text" id="taskTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="taskDesc">任务描述</label>
+                    <textarea id="taskDesc" placeholder="详细描述任务内容..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="taskPhase">所属阶段</label>
+                    <input type="text" id="taskPhase" list="phaseOptions" required placeholder="选择或输入自定义阶段">
+                    <datalist id="phaseOptions">
+                        <option value="数据收集">数据收集</option>
+                        <option value="数据处理">数据处理</option>
+                        <option value="指标计算">指标计算</option>
+                        <option value="其他任务">其他任务</option>
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label for="taskWeek">时间安排</label>
+                    <input type="text" id="taskWeek" list="weekOptions" required placeholder="选择或输入自定义时间">
+                    <datalist id="weekOptions">
+                        <option value="第一周">第一周</option>
+                        <option value="第二-三周">第二-三周</option>
+                        <option value="第四周">第四周</option>
+                        <option value="其他时间">其他时间</option>
+                    </datalist>
+                </div>
+                <div class="form-group">
+                    <label for="taskType">数据类型</label>
+                    <input type="text" id="taskType" placeholder="如：遥感数据、统计数据等">
+                </div>
+                <div class="form-group">
+                    <label for="taskSource">数据源</label>
+                    <input type="text" id="taskSource" placeholder="数据来源说明">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddTaskModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加任务</button>
+                </div>
             </form>
-            <p id="greet-msg"></p>
-        </main>
-    </body>
+        </div>
+    </div>
+
+    <!-- 添加日程模态框 -->
+    <div class="modal" id="addScheduleModal">
+        <div class="modal-content">
+            <h3>添加时间安排</h3>
+            <form id="addScheduleForm">
+                <div class="form-group">
+                    <label for="scheduleTitle">任务名称</label>
+                    <input type="text" id="scheduleTitle" required placeholder="如：数据收集、会议讨论等">
+                </div>
+                <div class="form-group">
+                    <label for="scheduleDesc">任务描述</label>
+                    <textarea id="scheduleDesc" placeholder="详细描述任务内容..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>时间安排</label>
+                    <div class="time-picker-grid">
+                        <select id="scheduleWeekday" required>
+                            <option value="1">周一</option>
+                            <option value="2">周二</option>
+                            <option value="3">周三</option>
+                            <option value="4">周四</option>
+                            <option value="5">周五</option>
+                            <option value="6">周六</option>
+                            <option value="0">周日</option>
+                        </select>
+                        <input type="time" id="scheduleStartTime" required value="09:00">
+                        <input type="time" id="scheduleEndTime" required value="10:00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="schedulePriority">优先级</label>
+                    <select id="schedulePriority">
+                        <option value="low">低优先级</option>
+                        <option value="medium" selected>中优先级</option>
+                        <option value="high">高优先级</option>
+                    </select>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddScheduleModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">添加安排</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 新建计划模态框 -->
+    <div class="modal" id="addPlanModal">
+        <div class="modal-content">
+            <h3>新建研究计划</h3>
+            <form id="addPlanForm">
+                <div class="form-group">
+                    <label for="planName">计划名称</label>
+                    <input type="text" id="planName" required placeholder="如：生态修复研究计划">
+                </div>
+                <div class="form-group">
+                    <label for="planDesc">计划描述</label>
+                    <textarea id="planDesc" placeholder="简要描述研究计划的目标和内容..."></textarea>
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="hidePlanModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">创建计划</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="stats">
+        <h4>📊 总体进度</h4>
+        <div class="stat-item">
+            <span>总任务数:</span>
+            <span class="stat-value" id="total-tasks">40</span>
+        </div>
+        <div class="stat-item">
+            <span>已完成:</span>
+            <span class="stat-value" id="completed-tasks">0</span>
+        </div>
+        <div class="stat-item">
+            <span>待完成:</span>
+            <span class="stat-value" id="pending-tasks">40</span>
+        </div>
+        <div class="stat-item">
+            <span>完成率:</span>
+            <span class="stat-value" id="completion-rate">0%</span>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let plans = {};
+        let currentPlan = 'default';
+        let currentFilter = 'all';
+        let taskIdCounter = 1000;
+        let schedules = {};
+        let currentWeekStart = new Date();
+        let selectedTimeSlot = null;
+
+        // 初始化当前周的开始日期（周一）
+        function initCurrentWeek() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+            currentWeekStart = new Date(today);
+            currentWeekStart.setDate(today.getDate() + mondayOffset);
+        }
+
+        // 初始化默认计划
+        function initializeDefaultPlan() {
+            plans['default'] = {
+                name: '默认计划',
+                description: '水域生态系统服务功能评价研究',
+                tasks: []
+            };
+            
+            // 初始化日程表
+            if (!schedules['default']) {
+                schedules['default'] = {};
+            }
+            
+            // 从DOM中读取现有任务
+            const taskRows = document.querySelectorAll('.task-row');
+            taskRows.forEach((row, index) => {
+                const task = {
+                    id: index,
+                    element: row,
+                    completed: false,
+                    week: row.dataset.week,
+                    phase: row.closest('.phase-section').dataset.phase,
+                    title: row.querySelector('.task-title').textContent,
+                    description: row.querySelector('.task-desc').textContent,
+                    type: row.querySelectorAll('.task-cell')[2].textContent,
+                    source: row.querySelector('.data-source').textContent
+                };
+                plans['default'].tasks.push(task);
+            });
+            
+            updateProgress();
+        }
+
+        // 计划管理
+        function addNewPlan() {
+            document.getElementById('addPlanModal').classList.add('show');
+        }
+
+        function hidePlanModal() {
+            document.getElementById('addPlanModal').classList.remove('show');
+            document.getElementById('addPlanForm').reset();
+        }
+
+        function createPlan(name, description) {
+            const planId = 'plan_' + Date.now();
+            plans[planId] = {
+                name: name,
+                description: description,
+                tasks: []
+            };
+            
+            // 初始化该计划的日程表
+            if (!schedules[planId]) {
+                schedules[planId] = {};
+            }
+            
+            // 添加计划标签
+            const tabsContainer = document.querySelector('.plan-tabs');
+            const addBtn = tabsContainer.querySelector('.add-plan-btn');
+            
+            const newTab = document.createElement('div');
+            newTab.className = 'plan-tab';
+            newTab.dataset.plan = planId;
+            newTab.innerHTML = `
+                ${name}
+                <span class="close-btn" onclick="event.stopPropagation(); closePlan('${planId}')">×</span>
+            `;
+            newTab.onclick = () => switchPlan(planId);
+            
+            tabsContainer.insertBefore(newTab, addBtn);
+            switchPlan(planId);
+            
+            savePlans();
+        }
+
+        function switchPlan(planId) {
+            currentPlan = planId;
+            
+            // 更新标签状态
+            document.querySelectorAll('.plan-tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.dataset.plan === planId) {
+                    tab.classList.add('active');
+                }
+            });
+            
+            // 显示/隐藏关闭按钮
+            document.querySelectorAll('.close-btn').forEach(btn => {
+                btn.style.display = planId === 'default' ? 'none' : 'inline-flex';
+            });
+            
+            // 重新渲染任务列表和日程表
+            renderPlanTasks();
+            updateFilterButtons();
+            updateProgress();
+            generateScheduleTable(); // 更新日程表
+        }
+
+        function closePlan(planId) {
+            if (planId === 'default') return;
+            
+            if (confirm('确定要删除这个计划吗？所有任务数据和日程安排将被删除。')) {
+                delete plans[planId];
+                delete schedules[planId]; // 同时删除日程数据
+                document.querySelector(`[data-plan="${planId}"]`).remove();
+                
+                if (currentPlan === planId) {
+                    switchPlan('default');
+                }
+                savePlans();
+                localStorage.setItem('researchSchedules', JSON.stringify(schedules));
+                generateScheduleTable(); // 重新生成日程表
+            }
+        }
+
+        // 任务管理
+        function showAddTaskModal() {
+            document.getElementById('addTaskModal').classList.add('show');
+        }
+
+        function hideAddTaskModal() {
+            document.getElementById('addTaskModal').classList.remove('show');
+            document.getElementById('addTaskForm').reset();
+        }
+
+        function addTask(taskData) {
+            const task = {
+                id: taskIdCounter++,
+                completed: false,
+                title: taskData.title,
+                description: taskData.description,
+                phase: taskData.phase,
+                week: taskData.week,
+                type: taskData.type,
+                source: taskData.source
+            };
+            
+            plans[currentPlan].tasks.push(task);
+            renderPlanTasks();
+            updateFilterButtons();
+            updateProgress();
+            savePlans();
+        }
+
+        function removeTask(taskId) {
+            const plan = plans[currentPlan];
+            plan.tasks = plan.tasks.filter(task => task.id !== taskId);
+            renderPlanTasks();
+            updateFilterButtons();
+            updateProgress();
+            savePlans();
+        }
+
+        function renderPlanTasks() {
+            const plan = plans[currentPlan];
+            
+            // 清空现有任务（只清空预定义阶段）
+            document.querySelectorAll('.phase-section[data-phase="datacollection"], .phase-section[data-phase="dataprocessing"], .phase-section[data-phase="calculation"], .phase-section[data-phase="others"]').forEach(section => {
+                const taskGrid = section.querySelector('.task-grid');
+                taskGrid.innerHTML = '';
+            });
+            
+            // 删除所有自定义阶段的section
+            document.querySelectorAll('.phase-section:not([data-phase="datacollection"]):not([data-phase="dataprocessing"]):not([data-phase="calculation"]):not([data-phase="others"])').forEach(section => {
+                section.remove();
+            });
+            
+            // 获取所有独特的阶段
+            const allPhases = [...new Set(plan.tasks.map(task => task.phase))].filter(phase => phase && phase.trim());
+            
+            // 预定义阶段映射（向后兼容）
+            const legacyPhaseMap = {
+                'datacollection': '数据收集',
+                'dataprocessing': '数据处理', 
+                'calculation': '指标计算',
+                'others': '其他任务'
+            };
+            
+            // 为每个阶段渲染任务
+            allPhases.forEach(phaseKey => {
+                const phaseTasks = plan.tasks.filter(task => task.phase === phaseKey);
+                let section = document.querySelector(`[data-phase="${phaseKey}"]`);
+                
+                // 如果是预定义阶段，使用现有section
+                if (!section) {
+                    // 创建自定义阶段section
+                    const displayName = legacyPhaseMap[phaseKey] || phaseKey;
+                    section = createCustomPhaseSection(phaseKey, displayName);
+                    document.querySelector('.main-content').appendChild(section);
+                }
+                
+                const taskGrid = section.querySelector('.task-grid');
+                
+                phaseTasks.forEach(task => {
+                    const taskRow = createTaskElement(task);
+                    taskGrid.appendChild(taskRow);
+                });
+            });
+            
+            // 显示有任务的预定义阶段，隐藏空的
+            const predefinedSections = document.querySelectorAll('.phase-section[data-phase="datacollection"], .phase-section[data-phase="dataprocessing"], .phase-section[data-phase="calculation"], .phase-section[data-phase="others"]');
+            predefinedSections.forEach(section => {
+                const phaseKey = section.dataset.phase;
+                const hasTasks = plan.tasks.some(task => task.phase === phaseKey);
+                section.style.display = hasTasks ? 'block' : 'none';
+            });
+        }
+
+        function createCustomPhaseSection(phaseKey, phaseName) {
+            const section = document.createElement('div');
+            section.className = 'phase-section fade-in';
+            section.dataset.phase = phaseKey;
+            
+            section.innerHTML = `
+                <div class="phase-header" onclick="togglePhase(this)">
+                    <span>📁 ${phaseName}</span>
+                    <span class="toggle-icon">▼</span>
+                </div>
+                <div class="phase-content">
+                    <div class="task-grid"></div>
+                </div>
+            `;
+            
+            return section;
+        }
+
+        function createTaskElement(task) {
+            const taskRow = document.createElement('div');
+            taskRow.className = 'task-row';
+            taskRow.dataset.week = task.week;
+            if (task.completed) taskRow.classList.add('completed');
+            
+            taskRow.innerHTML = `
+                <div class="task-cell">
+                    <div class="checkbox ${task.completed ? 'checked' : ''}" onclick="toggleTask(${task.id})"></div>
+                </div>
+                <div class="task-cell">
+                    <div>
+                        <div class="task-title">${task.title}</div>
+                        <div class="task-desc">${task.description}</div>
+                    </div>
+                </div>
+                <div class="task-cell">${task.type}</div>
+                <div class="task-cell">
+                    <span class="data-source">${task.source}</span>
+                    <button class="btn-remove" onclick="removeTask(${task.id})">🗑️</button>
+                </div>
+            `;
+            
+            return taskRow;
+        }
+
+        function toggleTask(taskId) {
+            const plan = plans[currentPlan];
+            const task = plan.tasks.find(t => t.id === taskId);
+            if (task) {
+                task.completed = !task.completed;
+                renderPlanTasks();
+                updateProgress();
+                savePlans();
+            }
+        }
+
+        function updateFilterButtons() {
+            const plan = plans[currentPlan];
+            const controlsLeft = document.querySelector('.controls-left');
+            
+            // 移除所有动态添加的阶段过滤按钮（保留基础的静态按钮）
+            controlsLeft.querySelectorAll('.filter-btn.phase-btn').forEach(btn => btn.remove());
+            
+            // 获取所有独特的阶段
+            const allPhases = [...new Set(plan.tasks.map(task => task.phase))].filter(phase => phase && phase.trim());
+            
+            // 预定义阶段的中文映射
+            const phaseNameMap = {
+                'datacollection': '数据收集',
+                'dataprocessing': '数据处理', 
+                'calculation': '指标计算',
+                'others': '其他任务'
+            };
+            
+            // 为每个实际存在的阶段添加过滤按钮
+            const searchBox = controlsLeft.querySelector('.search-box');
+            allPhases.forEach(phase => {
+                const displayName = phaseNameMap[phase] || phase; // 如果是预定义的英文阶段，转换为中文
+                
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn phase-btn';
+                btn.innerHTML = `
+                    <span>${displayName}</span>
+                    <span class="delete-phase" onclick="event.stopPropagation(); deletePhase('${phase.replace(/'/g, "\\'")}')">×</span>
+                `;
+                btn.onclick = () => filterTasks(phase);
+                controlsLeft.insertBefore(btn, searchBox);
+            });
+        }
+
+        // 删除阶段功能
+        function deletePhase(phaseName) {
+            const plan = plans[currentPlan];
+            const tasksInPhase = plan.tasks.filter(task => task.phase === phaseName);
+            
+            if (tasksInPhase.length > 0) {
+                if (!confirm(`确定要删除阶段"${phaseName}"吗？这将删除该阶段下的 ${tasksInPhase.length} 个任务。`)) {
+                    return;
+                }
+            }
+            
+            // 删除该阶段的所有任务
+            plan.tasks = plan.tasks.filter(task => task.phase !== phaseName);
+            
+            // 删除对应的自定义阶段section
+            const customSection = document.querySelector(`[data-phase="${phaseName}"]`);
+            if (customSection && !['datacollection', 'dataprocessing', 'calculation', 'others'].includes(customSection.dataset.phase)) {
+                customSection.remove();
+            }
+            
+            // 重新渲染和更新
+            renderPlanTasks();
+            updateFilterButtons();
+            updateProgress();
+            savePlans();
+            
+            // 如果当前过滤的就是被删除的阶段，切换到全部任务
+            if (currentFilter === phaseName) {
+                filterTasks('all');
+            }
+        }
+
+        // 日程表功能（课程表样式）
+        function showAddScheduleModal() {
+            document.getElementById('addScheduleModal').classList.add('show');
+        }
+
+        function hideAddScheduleModal() {
+            document.getElementById('addScheduleModal').classList.remove('show');
+            document.getElementById('addScheduleForm').reset();
+        }
+
+        function generateScheduleTable() {
+            const container = document.getElementById('scheduleContainer');
+            container.innerHTML = '';
+            
+            // 时间段配置
+            const timeConfig = {
+                startHour: parseInt(localStorage.getItem('timeConfig_startHour') || 8),
+                endHour: parseInt(localStorage.getItem('timeConfig_endHour') || 22),
+                interval: parseInt(localStorage.getItem('timeConfig_interval') || 60)
+            };
+            
+            // 生成时间段数组
+            const timeSlots = [];
+            const totalMinutes = (timeConfig.endHour - timeConfig.startHour) * 60;
+            const slotCount = Math.floor(totalMinutes / timeConfig.interval);
+            
+            for (let i = 0; i <= slotCount; i++) {
+                const currentMinutes = timeConfig.startHour * 60 + i * timeConfig.interval;
+                const hours = Math.floor(currentMinutes / 60);
+                const minutes = currentMinutes % 60;
+                timeSlots.push(
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`
+                );
+            }
+            
+            // 星期数组
+            const weekdays = ['时间', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            
+            // 生成表头
+            weekdays.forEach((day, index) => {
+                const header = document.createElement('div');
+                header.className = 'schedule-header';
+                if (index === 0) {
+                    header.textContent = day;
+                } else {
+                    const date = new Date(currentWeekStart);
+                    date.setDate(currentWeekStart.getDate() + index - 1);
+                    header.innerHTML = `
+                        <div>${day}</div>
+                        <div style="font-size: 12px; color: #86868B;">
+                            ${date.getMonth() + 1}/${date.getDate()}
+                        </div>
+                    `;
+                }
+                container.appendChild(header);
+            });
+            
+            // 生成时间段和单元格
+            timeSlots.forEach(timeSlot => {
+                // 时间列
+                const timeCell = document.createElement('div');
+                timeCell.className = 'schedule-time-slot';
+                timeCell.textContent = timeSlot;
+                container.appendChild(timeCell);
+                
+                // 每一天的单元格
+                for (let day = 1; day <= 7; day++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'schedule-cell';
+                    cell.dataset.day = day === 7 ? 0 : day; // 周日为0
+                    cell.dataset.time = timeSlot;
+                    
+                    // 检查是否有安排
+                    const tasks = getTasksForTimeSlot(day === 7 ? 0 : day, timeSlot);
+                    if (tasks.length > 0) {
+                        cell.classList.add('has-task');
+                        tasks.forEach(task => {
+                            const taskElement = document.createElement('div');
+                            taskElement.className = `schedule-task priority-${task.priority}`;
+                            taskElement.textContent = task.title;
+                            taskElement.onclick = (e) => {
+                                e.stopPropagation();
+                                removeScheduleTask(day === 7 ? 0 : day, timeSlot, task.id);
+                            };
+                            cell.appendChild(taskElement);
+                        });
+                    }
+                    
+                    cell.onclick = () => selectTimeSlot(day === 7 ? 0 : day, timeSlot);
+                    container.appendChild(cell);
+                }
+            });
+            
+            updateWeekDisplay();
+            createTimeConfigPanel();
+        }
+
+        // 创建时间配置面板
+        function createTimeConfigPanel() {
+            // 检查是否已存在配置面板
+            let configPanel = document.getElementById('timeConfigPanel');
+            if (!configPanel) {
+                configPanel = document.createElement('div');
+                configPanel.id = 'timeConfigPanel';
+                configPanel.className = 'config-section ios-card';
+                configPanel.innerHTML = `
+                    <div class="section-header bg-primary text-white p-2 rounded-top">
+                        <i class="bi bi-clock me-2"></i>
+                        <span class="h5">时间配置</span>
+                        <button class="ios-icon-btn" onclick="toggleTimeConfig()">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M17 13L12 18L7 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M17 11L12 6L7 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="collapse-icon"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="config-content p-3 border">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">开始时间</label>
+                                <input type="number" class="form-control form-control-sm" 
+                                    id="configStart" min="0" max="24" 
+                                    value="${localStorage.getItem('timeConfig_startHour') || 8}">
+                            </div>
+                <div class="config-item">
+                    <label>结束时间：
+                        <input type="number" id="configEnd" min="0" max="24" value="22">
+                    </label>
+                </div>
+                <div class="config-item">
+                    <label>间隔(分钟)：
+                        <select id="configInterval">
+                            <option value="15">15分钟</option>
+                            <option value="30">30分钟</option>
+                            <option value="60" selected>1小时</option>
+                        </select>
+                    </label>
+                </div>
+                <button onclick="applyTimeConfig()">应用设置</button>
+            `;
+                document.getElementById('scheduleContainer').insertAdjacentElement('beforebegin', configPanel);
+            }
+            
+            function toggleTimeConfig() {
+                const content = document.querySelector('#timeConfigPanel .config-content');
+                content.style.display = content.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        function applyTimeConfig() {
+            // 强制重置当前周视图
+            currentWeekStart = new Date(currentWeekStart.setHours(0,0,0,0));
+            
+            // 更新存储配置
+            localStorage.setItem('timeConfig_startHour', document.getElementById('configStart').value);
+            localStorage.setItem('timeConfig_endHour', document.getElementById('configEnd').value);
+            localStorage.setItem('timeConfig_interval', document.getElementById('configInterval').value);
+            
+            // 清除旧日程表
+            const container = document.getElementById('scheduleContainer');
+            container.innerHTML = '';
+            
+            // 重新生成组件
+            generateScheduleTable();
+            updateAllScheduleTasks();
+            savePlans();
+            
+            // 刷新周显示
+            updateWeekDisplay();
+            
+            if(newConfig.startHour >= newConfig.endHour) {
+                alert('结束时间必须晚于开始时间');
+                return;
+            }
+            
+            localStorage.setItem('timeConfig', JSON.stringify(newConfig));
+            // 强制重新初始化
+            currentWeekStart = new Date();
+            generateScheduleTable();
+            updateAllScheduleTasks();
+        }
+
+        function getTasksForTimeSlot(weekday, timeSlot) {
+            if (!schedules[currentPlan] || !schedules[currentPlan][weekday]) {
+                return [];
+            }
+            
+            return schedules[currentPlan][weekday].filter(task => {
+                const taskStartHour = parseInt(task.startTime.split(':')[0]);
+                const slotHour = parseInt(timeSlot.split(':')[0]);
+                const taskEndHour = parseInt(task.endTime.split(':')[0]);
+                
+                return slotHour >= taskStartHour && slotHour < taskEndHour;
+            });
+        }
+
+        function selectTimeSlot(weekday, timeSlot) {
+            selectedTimeSlot = { weekday, timeSlot };
+            
+            // 设置添加日程表单的默认值
+            document.getElementById('scheduleWeekday').value = weekday;
+            document.getElementById('scheduleStartTime').value = timeSlot;
+            
+            // 计算结束时间（默认1小时后）
+            const startHour = parseInt(timeSlot.split(':')[0]);
+            const endTime = `${(startHour + 1).toString().padStart(2, '0')}:00`;
+            document.getElementById('scheduleEndTime').value = endTime;
+            
+            showAddScheduleModal();
+        }
+
+        function changeWeek(direction) {
+            currentWeekStart.setDate(currentWeekStart.getDate() + direction * 7);
+            generateScheduleTable();
+        }
+
+        function updateWeekDisplay() {
+            const weekEnd = new Date(currentWeekStart);
+            weekEnd.setDate(currentWeekStart.getDate() + 6);
+            
+            const formatDate = (date) => {
+                return `${date.getMonth() + 1}月${date.getDate()}日`;
+            };
+            
+            document.getElementById('currentWeekDisplay').textContent = 
+                `${currentWeekStart.getFullYear()}年${formatDate(currentWeekStart)} - ${formatDate(weekEnd)}`;
+        }
+
+        function addScheduleTask(taskData) {
+            if (!schedules[currentPlan]) {
+                schedules[currentPlan] = {};
+            }
+            
+            const weekday = parseInt(taskData.weekday);
+            if (!schedules[currentPlan][weekday]) {
+                schedules[currentPlan][weekday] = [];
+            }
+            
+            const task = {
+                id: Date.now(),
+                title: taskData.title,
+                description: taskData.description,
+                startTime: taskData.startTime,
+                endTime: taskData.endTime,
+                priority: taskData.priority
+            };
+            
+            schedules[currentPlan][weekday].push(task);
+            localStorage.setItem('researchSchedules', JSON.stringify(schedules));
+            generateScheduleTable();
+        }
+
+        function removeScheduleTask(weekday, timeSlot, taskId) {
+            if (schedules[currentPlan] && schedules[currentPlan][weekday]) {
+                schedules[currentPlan][weekday] = schedules[currentPlan][weekday].filter(task => task.id !== taskId);
+                
+                if (schedules[currentPlan][weekday].length === 0) {
+                    delete schedules[currentPlan][weekday];
+                }
+                
+                localStorage.setItem('researchSchedules', JSON.stringify(schedules));
+                generateScheduleTable();
+            }
+        }
+
+        function updateProgress() {
+            const plan = plans[currentPlan];
+            
+            // 更新预定义周次的进度（兼容旧数据和新数据）
+            const weeks = ['week1', 'week2', 'week3', 'week4'];
+            const weekMapping = {
+                'week1': ['1', '第一周'],
+                'week2': ['2', '第二-三周'], 
+                'week3': ['3', '第四周'],
+                'week4': ['4', '其他时间']
+            };
+            
+            weeks.forEach((week, index) => {
+                const acceptableWeeks = weekMapping[week];
+                const weekTasks = plan.tasks.filter(task => acceptableWeeks.includes(task.week));
+                const completed = weekTasks.filter(task => task.completed).length;
+                const total = weekTasks.length;
+                const percentage = total > 0 ? (completed / total) * 100 : 0;
+                
+                const completedEl = document.getElementById(`${week}-completed`);
+                const totalEl = document.getElementById(`${week}-total`);
+                const progressEl = document.getElementById(`${week}-progress`);
+                
+                if (completedEl) completedEl.textContent = completed;
+                if (totalEl) totalEl.textContent = total;
+                if (progressEl) progressEl.style.width = percentage + '%';
+            });
+
+            // 更新总体统计
+            const totalTasks = plan.tasks.length;
+            const completedTasks = plan.tasks.filter(task => task.completed).length;
+            const pendingTasks = totalTasks - completedTasks;
+            const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+            document.getElementById('total-tasks').textContent = totalTasks;
+            document.getElementById('completed-tasks').textContent = completedTasks;
+            document.getElementById('pending-tasks').textContent = pendingTasks;
+            document.getElementById('completion-rate').textContent = completionRate + '%';
+        }
+
+        // 过滤和搜索
+        function filterTasks(filter) {
+            currentFilter = filter;
+            
+            // 更新按钮状态
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 找到对应的按钮并激活
+            if (filter === 'all') {
+                document.querySelector('.filter-btn[onclick="filterTasks(\'all\')"]').classList.add('active');
+            } else if (filter === 'completed') {
+                document.querySelector('.filter-btn[onclick="filterTasks(\'completed\')"]').classList.add('active');
+            } else if (filter === 'pending') {
+                document.querySelector('.filter-btn[onclick="filterTasks(\'pending\')"]').classList.add('active');
+            } else {
+                // 自定义阶段 - 通过onclick属性查找对应按钮
+                const phaseBtn = Array.from(document.querySelectorAll('.phase-btn')).find(btn => {
+                    const onclickAttr = btn.getAttribute('onclick');
+                    return onclickAttr && onclickAttr.includes(`filterTasks('${filter}')`);
+                });
+                if (phaseBtn) phaseBtn.classList.add('active');
+            }
+
+            const plan = plans[currentPlan];
+            
+            plan.tasks.forEach(task => {
+                const taskElement = document.querySelector(`[onclick="toggleTask(${task.id})"]`)?.closest('.task-row');
+                if (taskElement) {
+                    let show = true;
+                    
+                    switch(filter) {
+                        case 'completed':
+                            show = task.completed;
+                            break;
+                        case 'pending':
+                            show = !task.completed;
+                            break;
+                        case 'all':
+                            show = true;
+                            break;
+                        default:
+                            // 自定义阶段过滤
+                            show = task.phase === filter;
+                    }
+                    
+                    taskElement.style.display = show ? 'grid' : 'none';
+                }
+            });
+
+            // 隐藏空的阶段
+            document.querySelectorAll('.phase-section').forEach(section => {
+                const visibleTasks = section.querySelectorAll('.task-row:not([style*="display: none"])');
+                section.style.display = visibleTasks.length > 0 ? 'block' : 'none';
+            });
+        }
+
+        function searchTasks(query) {
+            const searchTerm = query.toLowerCase();
+            const plan = plans[currentPlan];
+            
+            plan.tasks.forEach(task => {
+                const taskElement = document.querySelector(`[onclick="toggleTask(${task.id})"]`)?.closest('.task-row');
+                if (taskElement) {
+                    const titleMatch = task.title.toLowerCase().includes(searchTerm);
+                    const descMatch = task.description.toLowerCase().includes(searchTerm);
+                    const shouldShow = (titleMatch || descMatch) && (currentFilter === 'all' || 
+                        (currentFilter === 'completed' && task.completed) ||
+                        (currentFilter === 'pending' && !task.completed) ||
+                        (task.phase === currentFilter));
+                    
+                    taskElement.style.display = shouldShow ? 'grid' : 'none';
+                }
+            });
+        }
+
+        function togglePhase(header) {
+            const content = header.nextElementSibling;
+            const icon = header.querySelector('.toggle-icon');
+            
+            content.classList.toggle('collapsed');
+            icon.style.transform = content.classList.contains('collapsed') ? 'rotate(-90deg)' : 'rotate(0deg)';
+        }
+
+        // 数据持久化
+        function savePlans() {
+            // 将DOM元素从任务中移除，只保存数据
+            const plansToSave = {};
+            Object.keys(plans).forEach(planId => {
+                plansToSave[planId] = {
+                    name: plans[planId].name,
+                    description: plans[planId].description,
+                    tasks: plans[planId].tasks.map(task => ({
+                        id: task.id,
+                        completed: task.completed,
+                        title: task.title,
+                        description: task.description,
+                        phase: task.phase,
+                        week: task.week,
+                        type: task.type,
+                        source: task.source
+                    }))
+                };
+            });
+            
+            localStorage.setItem('researchPlans', JSON.stringify(plansToSave));
+            localStorage.setItem('currentPlan', currentPlan);
+        }
+
+        function loadPlans() {
+            const saved = localStorage.getItem('researchPlans');
+            const savedCurrentPlan = localStorage.getItem('currentPlan');
+            const savedSchedules = localStorage.getItem('researchSchedules');
+            
+            if (savedSchedules) {
+                schedules = JSON.parse(savedSchedules);
+            }
+            
+            if (saved) {
+                plans = JSON.parse(saved);
+                
+                // 重建计划标签
+                const tabsContainer = document.querySelector('.plan-tabs');
+                const addBtn = tabsContainer.querySelector('.add-plan-btn');
+                
+                // 清除现有标签（除了默认和添加按钮）
+                tabsContainer.querySelectorAll('.plan-tab:not([data-plan="default"])').forEach(tab => tab.remove());
+                
+                // 添加保存的计划标签
+                Object.keys(plans).forEach(planId => {
+                    if (planId !== 'default') {
+                        const newTab = document.createElement('div');
+                        newTab.className = 'plan-tab';
+                        newTab.dataset.plan = planId;
+                        newTab.innerHTML = `
+                            ${plans[planId].name}
+                            <span class="close-btn" onclick="event.stopPropagation(); closePlan('${planId}')">×</span>
+                        `;
+                        newTab.onclick = () => switchPlan(planId);
+                        tabsContainer.insertBefore(newTab, addBtn);
+                    }
+                });
+                
+                // 切换到上次使用的计划
+                if (savedCurrentPlan && plans[savedCurrentPlan]) {
+                    switchPlan(savedCurrentPlan);
+                } else {
+                    switchPlan('default');
+                }
+            } else {
+                switchPlan('default');
+            }
+        }
+
+        // 表单事件处理
+        document.getElementById('addTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const taskData = {
+                title: document.getElementById('taskTitle').value,
+                description: document.getElementById('taskDesc').value,
+                phase: document.getElementById('taskPhase').value,
+                week: document.getElementById('taskWeek').value,
+                type: document.getElementById('taskType').value,
+                source: document.getElementById('taskSource').value
+            };
+            
+            addTask(taskData);
+            hideAddTaskModal();
+        });
+
+        document.getElementById('addPlanForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('planName').value;
+            const description = document.getElementById('planDesc').value;
+            
+            createPlan(name, description);
+            hidePlanModal();
+        });
+
+        document.getElementById('addScheduleForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const taskData = {
+                title: document.getElementById('scheduleTitle').value,
+                description: document.getElementById('scheduleDesc').value,
+                weekday: document.getElementById('scheduleWeekday').value,
+                startTime: document.getElementById('scheduleStartTime').value,
+                endTime: document.getElementById('scheduleEndTime').value,
+                priority: document.getElementById('schedulePriority').value
+            };
+            
+            // 验证时间
+            if (taskData.startTime >= taskData.endTime) {
+                alert('结束时间必须晚于开始时间！');
+                return;
+            }
+            
+            addScheduleTask(taskData);
+            hideAddScheduleModal();
+        });
+
+        // 关闭模态框（点击外部）
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
+
+        function updateProgress() { 
+            const plan = plans[currentPlan]; 
+            
+            // 动态生成进度卡片 
+            generateProgressCards(); 
+
+            // 更新总体统计 
+            const totalTasks = plan.tasks.length; 
+            const completedTasks = plan.tasks.filter(task => task.completed).length; 
+            const pendingTasks = totalTasks - completedTasks; 
+            const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0; 
+
+            document.getElementById('total-tasks').textContent = totalTasks; 
+            document.getElementById('completed-tasks').textContent = completedTasks; 
+            document.getElementById('pending-tasks').textContent = pendingTasks; 
+            document.getElementById('completion-rate').textContent = completionRate + '%'; 
+        } 
+
+        function generateProgressCards() { 
+            const plan = plans[currentPlan]; 
+            const progressGrid = document.querySelector('.progress-grid'); 
+            
+            // 清空现有进度卡片 
+            progressGrid.innerHTML = ''; 
+            
+            // 获取所有独特的阶段 
+            const allPhases = [...new Set(plan.tasks.map(task => task.phase))].filter(phase => phase && phase.trim()); 
+            
+            // 预定义阶段的映射和颜色 
+            const phaseConfig = { 
+                'datacollection': { 
+                    name: '数据收集', 
+                    color: 'week1', 
+                    icon: '📊' 
+                }, 
+                'dataprocessing': { 
+                    name: '数据处理', 
+                    color: 'week2', 
+                    icon: '⚙️' 
+                }, 
+                'calculation': { 
+                    name: '指标计算', 
+                    color: 'week3', 
+                    icon: '📈' 
+                }, 
+                'others': { 
+                    name: '其他任务', 
+                    color: 'week4', 
+                    icon: '🔧' 
+                } 
+            }; 
+            
+            // 为每个阶段生成进度卡片 
+            allPhases.forEach((phase, index) => { 
+                const phaseTasks = plan.tasks.filter(task => task.phase === phase); 
+                const completed = phaseTasks.filter(task => task.completed).length; 
+                const total = phaseTasks.length; 
+                const percentage = total > 0 ? (completed / total) * 100 : 0; 
+                
+                // 获取阶段配置，如果是自定义阶段，使用默认配置 
+                const config = phaseConfig[phase] || { 
+                    name: phase, 
+                    color: `custom-${index % 4}`, 
+                    icon: '📁' 
+                }; 
+                
+                // 创建进度卡片 
+                const progressCard = document.createElement('div'); 
+                progressCard.className = `progress-card ${config.color}`; 
+                progressCard.innerHTML = ` 
+                    <h3>${config.icon} ${config.name}</h3> 
+                    <div class="progress-bar"> 
+                        <div class="progress-fill" style="width: ${percentage}%"></div> 
+                    </div> 
+                    <div><span>${completed}</span> / <span>${total}</span> 项任务</div> 
+                `; 
+                
+                progressGrid.appendChild(progressCard); 
+            }); 
+            
+            // 如果没有任务，显示空状态 
+            if (allPhases.length === 0) { 
+                const emptyCard = document.createElement('div'); 
+                emptyCard.className = 'progress-card'; 
+                emptyCard.innerHTML = ` 
+                    <h3>📋 暂无任务</h3> 
+                    <div class="progress-bar"> 
+                        <div class="progress-fill" style="width: 0%"></div> 
+                    </div> 
+                    <div>0 / 0 项任务</div> 
+                `; 
+                progressGrid.appendChild(emptyCard); 
+            } 
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initCurrentWeek();
+            initializeDefaultPlan();
+            loadPlans();
+            updateFilterButtons();
+            generateScheduleTable(); // 初始化日程表显示
+            
+            // 添加淡入动画
+            document.querySelectorAll('.phase-section').forEach((section, index) => {
+                setTimeout(() => {
+                    section.classList.add('fade-in');
+                }, index * 200);
+            });
+        });
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 's') {
+                e.preventDefault();
+                savePlans();
+                alert('进度已保存！');
+            }
+            
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.show').forEach(modal => {
+                    modal.classList.remove('show');
+                });
+            }
+        });
+    </script>
+</body>
 </html>
